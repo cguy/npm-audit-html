@@ -11,6 +11,12 @@ updateNotifier({ pkg }).notify()
 
 let stdin = ''
 
+if (require.main === module) {
+    console.log('called directly');
+} else {
+    console.log('required as a module');
+}
+
 program
   .version(pkg.version)
   .option('-o, --output [output]', 'output file')
