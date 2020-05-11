@@ -12,38 +12,40 @@ updateNotifier({ pkg }).notify()
 let stdin = ''
 
 if (require.main === module) {
-    console.log('called directly');
+    program
+      .version(pkg.version)
+      .option('-o, --output [output]', 'output file')
+      .option('-i, --input [input]', 'input file')
+      .option(
+        '-c, --theme [theme name]',
+        'template theme `dark` or `light` (defaults to `light`)'
+      )
+      .option('-t, --template [handlebars file]', 'handlebars template file')
+      .action(async (cmd, env) => {
+        try {
+          let data
+          if (cmd.input) {
+            data = await fs.readJson(cmd.input)
+          } else if (stdin) {
+            data = JSON.parse(stdin)
+          } else {
+            console.log('No input')
+            return process.exit(1)
+          }
+
+          await genReport(data, cmd.output, cmd.template, cmd.theme)
+        } catch (err) {
+          console.error('Failed to parse NPM Audit JSON!')
+          return process.exit(1)
+        }
+      })
+
 } else {
-    console.log('required as a module');
+    module.exports = {
+      generateReport: genReport
+    }
 }
 
-program
-  .version(pkg.version)
-  .option('-o, --output [output]', 'output file')
-  .option('-i, --input [input]', 'input file')
-  .option(
-    '-c, --theme [theme name]',
-    'template theme `dark` or `light` (defaults to `light`)'
-  )
-  .option('-t, --template [handlebars file]', 'handlebars template file')
-  .action(async (cmd, env) => {
-    try {
-      let data
-      if (cmd.input) {
-        data = await fs.readJson(cmd.input)
-      } else if (stdin) {
-        data = JSON.parse(stdin)
-      } else {
-        console.log('No input')
-        return process.exit(1)
-      }
-
-      await genReport(data, cmd.output, cmd.template, cmd.theme)
-    } catch (err) {
-      console.error('Failed to parse NPM Audit JSON!')
-      return process.exit(1)
-    }
-  })
 
 const genReport = async (
   data,
