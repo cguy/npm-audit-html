@@ -12,6 +12,31 @@ updateNotifier({ pkg }).notify()
 let stdin = ''
 
 if (require.main === module) {
+    const genReport = async (
+  data,
+  output = 'npm-audit.html',
+  template,
+  theme = 'light'
+) => {
+  try {
+    if (!data) {
+      console.log('No JSON')
+      return process.exit(1)
+    }
+
+    const templateFile = template || `${__dirname}/templates/template.hbs`
+
+    await reporter(data, templateFile, output, theme)
+
+    console.log(`Vulnerability snapshot saved at ${output}`)
+    process.exit(0)
+  } catch (err) {
+    console.log('An error occurred!')
+    console.log(err)
+    process.exit(1)
+  }
+} 
+    
     program
       .version(pkg.version)
       .option('-o, --output [output]', 'output file')
@@ -41,13 +66,7 @@ if (require.main === module) {
       })
 
 } else {
-    module.exports = {
-      generateReport: genReport
-    }
-}
-
-
-const genReport = async (
+    const generateReport = async (
   data,
   output = 'npm-audit.html',
   template,
@@ -55,22 +74,19 @@ const genReport = async (
 ) => {
   try {
     if (!data) {
-      console.log('No JSON')
-      return process.exit(1)
+      throw new Error('No JSON to analyze');
     }
 
     const templateFile = template || `${__dirname}/templates/template.hbs`
-
     await reporter(data, templateFile, output, theme)
-
-    console.log(`Vulnerability snapshot saved at ${output}`)
-    process.exit(0)
-  } catch (err) {
-    console.log('An error occurred!')
-    console.log(err)
-    process.exit(1)
-  }
 }
+    module.exports = {
+      generateReport
+    }
+}
+
+
+
 
 if (process.stdin.isTTY) {
   program.parse(process.argv)
